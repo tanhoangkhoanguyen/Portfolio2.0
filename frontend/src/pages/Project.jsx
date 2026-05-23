@@ -90,7 +90,7 @@ export function Project() {
     <div className="w-full">
       <h2 className="text-left text-slate-900 dark:text-white">Projects</h2>
 
-      <div className="mx-auto mt-10 flex w-full items-center justify-center gap-3 sm:gap-5 md:gap-50">
+      <div className="mx-auto mt-10 flex w-full items-center justify-center gap-3 sm:gap-5 md:gap-[12.5rem]">
         <button
           type="button"
           onClick={() => navigate((index - 1 + n) % n)}

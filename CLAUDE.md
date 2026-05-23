@@ -20,9 +20,8 @@ Portfolio2.0/
 │   │   └── App.jsx        # Main app with section routing via URL ids
 │   └── vite.config.js     # Dev proxy to backend API
 ├── backend/               # Express API
-│   ├── models/            # MongoDB schemas (ContactMessage)
 │   ├── server.js          # Main server (health check, contact endpoint)
-│   └── mail.js            # Email notification service via Nodemailer
+│   └── mail.js            # Email notification service
 ├── render.yaml            # Render deployment config
 └── DEPLOY.md              # Deployment instructions for Vercel + Render
 ```
@@ -36,17 +35,19 @@ Portfolio2.0/
 
 ### Backend Flow
 1. **server.js** initializes Express, configures CORS, and sets up routes
-2. If `MONGODB_URI` is set, messages are persisted via Mongoose; otherwise stored in memory
-3. On contact form submission:
-   - Validates required fields (name, email, message)
-   - Saves to MongoDB or memory
-   - Sends email notification via Nodemailer (if SMTP configured)
-   - Returns status (saved, emailSent, emailError)
+2. On contact form submission:
+   - Validates required fields (name, email, message) with whitespace trimming
+   - Sends email notification (if Resend or SMTP configured)
+   - Returns status (ok, emailSent, emailError)
+3. **mail.js** handles two email providers:
+   - **Resend** (production on Render; free tier 100 emails/day)
+   - **SMTP** (local development only; blocked on Render free tier)
 
 ### Deployment
 - Frontend: Vercel (reads `VITE_API_URL` env var to point to backend)
-- Backend: Render (reads `CORS_ORIGIN`, `MONGODB_URI`, and SMTP credentials from env vars)
+- Backend: Render (reads `CORS_ORIGIN`, `RESEND_API_KEY`, and SMTP credentials from env vars)
 - Both use git for auto-deploy on push
+- See DEPLOY.md for detailed instructions
 
 ## Key Development Notes
 
@@ -58,10 +59,12 @@ Portfolio2.0/
 - **Smooth scrolling:** Navbar uses hash-based navigation; sections have `id` attributes and `SECTION_SCROLL_MARGIN` for offset
 
 ### Backend
-- **Database:** MongoDB + Mongoose (optional); if no `MONGODB_URI`, messages stay in memory only (good for dev)
+- **Message storage:** Contact form messages are validated but not persisted (no database)
 - **CORS:** Set `CORS_ORIGIN` to comma-separated list of allowed origins (default: localhost:5173)
-- **Email:** Requires `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` (and optionally `SMTP_PORT`, `SMTP_SECURE`, `SMTP_FROM`, `CONTACT_TO_EMAIL`)
-- **Health check:** `GET /api/health` returns `{ ok, mongo, email }` status
+- **Email:** Optional; supports Resend (production) or SMTP (local dev)
+  - **Resend:** Requires `RESEND_API_KEY` and `CONTACT_TO_EMAIL`
+  - **SMTP:** Requires `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, and `CONTACT_TO_EMAIL`
+- **Health check:** `GET /api/health` returns `{ ok, email }` status
 
 ### Environment Variables
 **Frontend (.env or Vercel settings):**
@@ -69,9 +72,11 @@ Portfolio2.0/
 
 **Backend (.env or Render settings):**
 - `PORT` – Server port (default: 8001)
-- `MONGODB_URI` – MongoDB connection string (optional; in-memory fallback if not set)
-- `CORS_ORIGIN` – Comma-separated list of allowed origins
-- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_FROM`, `CONTACT_TO_EMAIL` – Email settings
+- `CORS_ORIGIN` – Comma-separated list of allowed origins (required)
+- `RESEND_API_KEY` – Resend API key (optional; use for production email on Render)
+- `RESEND_FROM` – Resend sender address (optional; has fallback default)
+- `CONTACT_TO_EMAIL` – Where to send contact notifications (optional; email won't send if not set)
+- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_FROM` – SMTP settings (optional; for local dev only)
 
 ## Testing the Contact Form
 
@@ -88,7 +93,7 @@ Portfolio2.0/
 
 ## Troubleshooting
 
-- **"CORS blocked" on contact submit:** Check `CORS_ORIGIN` on backend matches frontend origin
-- **Contact form hangs:** Check backend health at `GET <BACKEND_URL>/api/health`
-- **Email not sent:** Verify SMTP credentials and `CONTACT_TO_EMAIL` are set
-- **MongoDB connection fails:** Fall back to in-memory storage; not a blocker for dev/demo
+- **"CORS blocked" on contact submit:** Check `CORS_ORIGIN` on backend matches frontend origin (case-sensitive)
+- **Contact form hangs or times out:** Check backend health at `GET <BACKEND_URL>/api/health`; if sleeping, trigger a redeploy to wake it
+- **Email not sending:** Verify `CONTACT_TO_EMAIL` is set; if using SMTP on Render, switch to Resend (Render blocks SMTP ports)
+- **Validation errors on contact form:** Message inputs are trimmed; empty strings after trim are rejected

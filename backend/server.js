@@ -1,15 +1,11 @@
 require("dotenv").config()
 const cors = require("cors")
 const express = require("express")
-const mongoose = require("mongoose")
 
-const ContactMessage = require("./models/ContactMessage")
-const { sendContactNotification, isSmtpConfigured } = require("./mail")
+const { sendContactNotification, isEmailConfigured } = require("./mail")
 
 const app = express()
-const PORT = 8001
-
-const memoryMessages = []
+const PORT = Number(process.env.PORT) || 8001
 
 const corsOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim())
@@ -18,46 +14,30 @@ const corsOrigins = process.env.CORS_ORIGIN
 app.use(cors({ origin: corsOrigins }))
 app.use(express.json())
 
-if (!isSmtpConfigured()) {
+if (!isEmailConfigured()) {
   console.warn(
-    "SMTP not configured — set SMTP_HOST, SMTP_USER, SMTP_PASS to email hoangkhoa.nguyentan@gmail.com on each message."
+    "Email not configured — set RESEND_API_KEY (Render) or SMTP_* (local) to send contact notifications."
   )
 }
 
-function isDbReady() {
-  return mongoose.connection.readyState === 1
-}
-
 app.get("/api/health", (_req, res) => {
-  res.json({
-    ok: true,
-    mongo: isDbReady(),
-    email: isSmtpConfigured(),
-  })
+  res.json({ ok: true, email: isEmailConfigured() })
 })
 
 app.post("/api/contact", async (req, res) => {
   const { name, email, message } = req.body || {}
-  if (!name || !email || !message) {
-    return res.status(400).json({ ok: false, error: "Name, email, and message are required." })
-  }
+  const n = name?.trim()
+  const e = email?.trim()
+  const m = message?.trim()
 
-  try {
-    if (isDbReady()) {
-      await ContactMessage.create({ name, email, message })
-    } else {
-      memoryMessages.push({ name, email, message, createdAt: new Date().toISOString() })
-      console.log("[contact] stored in memory:", { name, email })
-    }
-  } catch (err) {
-    console.error(err)
-    return res.status(500).json({ ok: false, error: "Could not save your message. Try again later." })
+  if (!n || !e || !m) {
+    return res.status(400).json({ ok: false, error: "Name, email, and message are required." })
   }
 
   let emailSent = false
   let emailError = null
   try {
-    const result = await sendContactNotification({ name, email, message })
+    const result = await sendContactNotification({ name: n, email: e, message: m })
     emailSent = result.sent
     if (!result.sent && result.reason === "smtp_not_configured") {
       emailError = "smtp_not_configured"
@@ -67,12 +47,7 @@ app.post("/api/contact", async (req, res) => {
     emailError = "send_failed"
   }
 
-  return res.status(201).json({
-    ok: true,
-    saved: true,
-    emailSent,
-    emailError,
-  })
+  return res.status(201).json({ ok: true, emailSent, emailError })
 })
 
 app.listen(PORT, () => {
