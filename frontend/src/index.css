@@ -1,0 +1,336 @@
+@import "tailwindcss";
+
+@theme {
+  /* Bold geometric display — section titles & hero */
+  --font-display: "Syne", ui-sans-serif, system-ui, sans-serif;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes marquee-left {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marquee-right {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.skill-row:hover [data-skill-marquee] {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-skill-marquee] {
+    animation-duration: 120s !important;
+  }
+}
+
+/*
+ * Star drift: use fixed keyframes (no var() inside transform).
+ * Browsers often fail to interpolate transform keyframes when the endpoint uses CSS variables.
+ */
+@keyframes galaxy-star-drift-0 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(12vmin, 0, 0);
+  }
+}
+@keyframes galaxy-star-drift-1 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(10.39vmin, 6vmin, 0);
+  }
+}
+@keyframes galaxy-star-drift-2 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(6vmin, 10.39vmin, 0);
+  }
+}
+@keyframes galaxy-star-drift-3 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 12vmin, 0);
+  }
+}
+@keyframes galaxy-star-drift-4 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-6vmin, 10.39vmin, 0);
+  }
+}
+@keyframes galaxy-star-drift-5 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-10.39vmin, 6vmin, 0);
+  }
+}
+@keyframes galaxy-star-drift-6 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-12vmin, 0, 0);
+  }
+}
+@keyframes galaxy-star-drift-7 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-10.39vmin, -6vmin, 0);
+  }
+}
+@keyframes galaxy-star-drift-8 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-6vmin, -10.39vmin, 0);
+  }
+}
+@keyframes galaxy-star-drift-9 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, -12vmin, 0);
+  }
+}
+@keyframes galaxy-star-drift-10 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(6vmin, -10.39vmin, 0);
+  }
+}
+@keyframes galaxy-star-drift-11 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(10.39vmin, -6vmin, 0);
+  }
+}
+
+/* Drift only (transform). Name referenced from GalaxyBackground inline style. */
+.galaxy-star-arm {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  will-change: transform;
+}
+
+.experience-card {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.experience-card:hover {
+  transform: scale(1.02) translateY(-8px);
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow:
+    0 24px 48px rgba(56, 189, 248, 0.30),
+    0 8px 20px rgba(56, 189, 248, 0.18),
+    0 0 0 1px rgba(56, 189, 248, 0.14);
+}
+
+.dark .experience-card:hover {
+  border-color: rgba(125, 211, 252, 0.45);
+  box-shadow:
+    0 24px 48px rgba(56, 189, 248, 0.22),
+    0 8px 20px rgba(56, 189, 248, 0.14),
+    0 0 0 1px rgba(125, 211, 252, 0.14);
+}
+
+@keyframes hero-gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes hero-chevron-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(7px);
+  }
+}
+
+.hero-name-gradient {
+  background-image: linear-gradient(115deg, #0369a1 0%, #0d9488 28%, #4f46e5 62%, #6d28d9 100%);
+  background-size: 220% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: hero-gradient-shift 8s ease-in-out infinite;
+  /* Tight leading + background-clip:text often clips descenders (e.g. y, g in “Nguyen”) */
+  line-height: 0.9;
+  padding-bottom: 0.18em;
+  overflow: visible;
+}
+
+.dark .hero-name-gradient {
+  background-image: linear-gradient(115deg, #f0f9ff 0%, #38bdf8 32%, #a78bfa 68%, #e9d5ff 100%);
+}
+
+.font-hero-code {
+  font-family: "Fira Code", ui-monospace, monospace;
+}
+
+.hero-typewriter-caret {
+  animation: hero-caret-blink 1s step-end infinite;
+}
+
+@keyframes hero-caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-chevron svg {
+  animation: hero-chevron-bob 2.2s ease-in-out infinite;
+}
+
+.project-card {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.project-card:hover {
+  transform: scale(1.005) translateY(-1px);
+  border-color: rgba(56, 189, 248, 0.55);
+  box-shadow:
+    0 16px 40px rgba(56, 189, 248, 0.18),
+    0 0 0 1px rgba(56, 189, 248, 0.1);
+}
+
+.dark .project-card:hover {
+  border-color: rgba(125, 211, 252, 0.35);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(125, 211, 252, 0.1);
+}
+
+@keyframes card-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.project-card-anim {
+  animation: card-fade-in 0.28s ease-out both;
+}
+
+.skill-row-masked {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
+}
+
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2.5px;
+  z-index: 100;
+  background-image: linear-gradient(to right, #0ea5e9, #6366f1);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .experience-card:hover {
+    transform: none;
+  }
+
+  .galaxy-star-arm {
+    animation: none !important;
+  }
+
+  .hero-name-gradient,
+  .hero-chevron svg,
+  .hero-typewriter-caret {
+    animation: none !important;
+  }
+
+  .hero-name-gradient {
+    background-position: 50% 50%;
+  }
+
+  .hero-typewriter-caret {
+    opacity: 1;
+  }
+
+  .project-card-anim {
+    animation: none !important;
+  }
+
+  .project-card:hover {
+    transform: none;
+  }
+}
