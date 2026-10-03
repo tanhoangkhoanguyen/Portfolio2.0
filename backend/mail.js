@@ -4,84 +4,59 @@ const { Resend } = require("resend")
 
 dns.setDefaultResultOrder("ipv4first")
 
-function isResendConfigured() {
-  return Boolean(process.env.RESEND_API_KEY)
-}
+const env = process.env
 
-function isSmtpConfigured() {
-  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
-}
-
-function isEmailConfigured() {
-  return isResendConfigured() || isSmtpConfigured()
-}
-
-/**
- * Sends the contact form to CONTACT_TO_EMAIL.
- * - Production (Render free): use RESEND_API_KEY (HTTPS; SMTP ports 587/465 are blocked).
- * - Local dev: SMTP via Nodemailer/Gmail works when RESEND_API_KEY is unset.
- */
-async function sendContactNotification({ name, email, message }) {
-  if (isResendConfigured()) {
-    return sendViaResend({ name, email, message })
-  }
-
-  if (!isSmtpConfigured()) {
-    return { sent: false, reason: "smtp_not_configured" }
-  }
-
-  return sendViaSmtp({ name, email, message })
-}
-
-function buildEmailBody({ name, email, message }) {
-  return {
-    subject: `[Portfolio] Message from ${name}`,
-    text: `From: ${name} <${email}>\n\n${message}`,
-    html: `<p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p><p>${escapeHtml(message).replace(/\n/g, "<br/>")}</p>`,
+// Each factory runs once at startup and returns a reusable `send(mail)` function.
+function createResendSender() {
+  const resend = new Resend(env.RESEND_API_KEY)
+  const from = env.RESEND_FROM || "Portfolio Contact <onboarding@resend.dev>"
+  return async (mail) => {
+    const { error } = await resend.emails.send({ from, ...mail })
+    if (error) throw new Error(error.message)
   }
 }
 
-async function sendViaResend({ name, email, message }) {
-  const to = process.env.CONTACT_TO_EMAIL
-  if (!to) throw new Error("CONTACT_TO_EMAIL is not set")
-
-  const from = process.env.RESEND_FROM || "Portfolio Contact <onboarding@resend.dev>"
-  const resend = new Resend(process.env.RESEND_API_KEY)
-  const body = buildEmailBody({ name, email, message })
-
-  const { error } = await resend.emails.send({
-    from,
-    to: [to],
-    replyTo: email,
-    ...body,
-  })
-
-  if (error) throw new Error(error.message)
-  return { sent: true }
-}
-
-async function sendViaSmtp({ name, email, message }) {
-  const to = process.env.CONTACT_TO_EMAIL
-  if (!to) throw new Error("CONTACT_TO_EMAIL is not set")
-
-  const from = process.env.SMTP_FROM
-  const body = buildEmailBody({ name, email, message })
-
+function createSmtpSender() {
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: process.env.SMTP_SECURE === "true",
+    host: env.SMTP_HOST,
+    port: Number(env.SMTP_PORT),
+    secure: env.SMTP_SECURE === "true",
     family: 4,
     connectionTimeout: 30_000,
     greetingTimeout: 30_000,
     socketTimeout: 30_000,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
+    auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
   })
+  return (mail) => transporter.sendMail({ from: env.SMTP_FROM, ...mail })
+}
 
-  await transporter.sendMail({ from, to, replyTo: email, ...body })
+/**
+ * Ordered by priority; the first enabled provider is used. Add a provider by adding an entry.
+ * - Resend: production (Render free tier blocks SMTP ports 587/465).
+ * - SMTP: local dev (e.g. Gmail via Nodemailer).
+ */
+const PROVIDERS = [
+  { enabled: Boolean(env.RESEND_API_KEY), create: createResendSender },
+  { enabled: Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS), create: createSmtpSender },
+]
+
+const TO = env.CONTACT_TO_EMAIL
+const send = TO ? PROVIDERS.find((p) => p.enabled)?.create() : undefined
+
+function isEmailConfigured() {
+  return Boolean(send)
+}
+
+async function sendContactNotification({ name, email, message }) {
+  if (!send) return { sent: false, reason: "smtp_not_configured" }
+
+  await send({
+    to: TO,
+    replyTo: email,
+    subject: `[Portfolio] Message from ${name}`,
+    text: `From: ${name} <${email}>\n\n${message}`,
+    html: `<p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p><p>${escapeHtml(message).replace(/\n/g, "<br/>")}</p>`,
+  })
   return { sent: true }
 }
 
