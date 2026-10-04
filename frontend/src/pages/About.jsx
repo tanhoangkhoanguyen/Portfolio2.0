@@ -11,7 +11,7 @@ const PHOTO_CLASS =
   "aspect-square w-56 rounded-lg object-cover sm:w-60 md:aspect-auto md:h-full md:min-h-[12rem] md:w-full"
 
 export function About() {
-  const photoProps = { alt: PROFILE.legalName, width: 280, height: 280, className: PHOTO_CLASS }
+  const photoProps = { alt: PROFILE.fullName, width: 280, height: 280, className: PHOTO_CLASS }
 
   return (
     <div className="w-full">
@@ -43,7 +43,7 @@ export function About() {
           </dl>
 
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button href={PROFILE.resumeUrl} download="Tan-Hoang-Khoa-Nguyen-Resume.pdf">
+            <Button href={PROFILE.resumeUrl} download="Cole-Nguyen-Resume.pdf">
               Download resume
             </Button>
             <Button variant="secondary" onClick={() => scrollToSection("contact")}>
