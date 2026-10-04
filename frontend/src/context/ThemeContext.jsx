@@ -1,10 +1,10 @@
 import { useLayoutEffect, useMemo, useState } from "react"
-import { ThemeContext } from "./portfolioThemeContext"
+import { ThemeContext } from "./theme"
 
 const STORAGE_KEY = "portfolio-theme"
 
 export function ThemeProvider({ children }) {
-  const [theme, setThemeState] = useState(
+  const [theme, setTheme] = useState(
     () => window.localStorage.getItem(STORAGE_KEY) || "dark"
     // "light" or null
   )
@@ -19,8 +19,7 @@ export function ThemeProvider({ children }) {
   const value = useMemo(
     () => ({
       theme,
-      setTheme: setThemeState,
-      toggleTheme: () => setThemeState((t) => (t === "dark" ? "light" : "dark")),  // Flip between modes
+      toggleTheme: () => setTheme((t) => (t === "dark" ? "light" : "dark")),       // Flip between modes
     }),
     [theme]
   )
