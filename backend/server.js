@@ -16,7 +16,7 @@ app.use(express.json())
 
 if (!isEmailConfigured()) {
   console.warn(
-    "Email not configured — set RESEND_API_KEY (Render) or SMTP_* (local) to send contact notifications."
+    "Email not configured — set CONTACT_TO_EMAIL plus RESEND_API_KEY (Render) or SMTP_* (local) to send contact notifications."
   )
 }
 
@@ -24,30 +24,25 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true, email: isEmailConfigured() })
 })
 
-app.post("/api/contact", async (req, res) => {
-  const { name, email, message } = req.body || {}
-  const n = name?.trim()
-  const e = email?.trim()
-  const m = message?.trim()
+// Non-strings (numbers, objects) become "" so they fail validation instead of crashing `.trim()`
+const clean = (value) => (typeof value === "string" ? value.trim() : "")
 
-  if (!n || !e || !m) {
+app.post("/api/contact", async (req, res) => {
+  const body = req.body || {}
+  const contact = { name: clean(body.name), email: clean(body.email), message: clean(body.message) }
+
+  if (!contact.name || !contact.email || !contact.message) {
     return res.status(400).json({ ok: false, error: "Name, email, and message are required." })
   }
 
-  let emailSent = false
-  let emailError = null
+  // The message is accepted either way; email problems are reported, not treated as request failures
   try {
-    const result = await sendContactNotification({ name: n, email: e, message: m })
-    emailSent = result.sent
-    if (!result.sent && result.reason === "smtp_not_configured") {
-      emailError = "smtp_not_configured"
-    }
-  } catch (mailErr) {
-    console.error("[contact] email failed:", mailErr.message)
-    emailError = "send_failed"
+    const { sent, reason = null } = await sendContactNotification(contact)
+    return res.status(201).json({ ok: true, emailSent: sent, emailError: reason })
+  } catch (err) {
+    console.error("[contact] email failed:", err.message)
+    return res.status(201).json({ ok: true, emailSent: false, emailError: "send_failed" })
   }
-
-  return res.status(201).json({ ok: true, emailSent, emailError })
 })
 
 app.listen(PORT, () => {
