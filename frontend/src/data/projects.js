@@ -1,37 +1,28 @@
 const GITHUB = "https://github.com/tanhoangkhoanguyen"
 
-export const PROJECT_IMAGE =
-  "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=480&fit=crop&q=80"
-
 export const PROJECTS = [
   {
+    title: "CostPilot",
+    description: "An LLM spending platform with a Spring Boot API gateway and interactive WebAssembly dashboard, enabling live token usage tracking, budget adjustments, and model access control.",
+    tags: ["Java 21", "Spring Boot", "Kafka", "PostgreSQL", "Redis"],
+    link: "https://github.com/khangpt2k6/CostPilot",
+  },
+  {
+    title: "LLMGuard",
+    description: "An LLM reliability gateway with admission control and retries that translates OpenAI-format requests into each provider's native API, sustaining 65 successful requests/s under 8× overload.",
+    tags: ["Go", "Redis", "nginx", "OpenTelemetry", "ClickHouse", "Docker"],
+    link: `${GITHUB}/LLMGuard`,
+  },
+  {
     title: "DocuMedAI",
-    description: "A medical AI chatbot capable of generating structured, knowledge-driven responses on diseases, covering definitions, etiology, and treatment strategies.",
-    tags: ["Python", "LangChain", "Qdrant", "Redis", "Docker"],
+    description: "An LLM orchestrator that decomposes each medical request into subtasks and runs them concurrently across nested worker pools, cutting orchestration latency by 47%.",
+    tags: ["Python", "LangGraph", "CrewAI", "Qdrant", "MongoDB", "Docker"],
     link: `${GITHUB}/DocuMedAI`,
   },
   {
-    title: "Hand2Image",
-    description: "A computer vision system that recognizes hand gestures and translates them into corresponding visual outputs in real time.",
-    tags: ["Python", "Object Detection"],
-    link: `${GITHUB}/Hand2Image`,
-  },
-  {
-    title: "Online-Platform-Video-Crawler",
-    description: "An automated data collection system that crawls and organizes large-scale video content and metadata from online platforms.",
-    tags: ["Python", "Selenium"],
-    link: `${GITHUB}/Online-Platform-Video-Crawler`,
-  },
-  {
-    title: "FinDeep-backend",
-    description: "An intelligent financial assistant capable of extracting and answering questions from financial documents.",
-    tags: ["Python", "LlamaIndex"],
-    link: `${GITHUB}/FinDeep-backend`,
-  },
-  {
-    title: "MapBench",
-    description: "A ML project capable of reading a visual map and give guidance to the user.",
-    tags: ["Python", "Pytorch"],
-    link: `${GITHUB}/MapBench`,
+    title: "VectorBench",
+    description: "A reproducible closed-loop benchmarking framework for five vector databases, measuring search accuracy, latency, and performance under load with a RAG pipeline using query expansion and reranking.",
+    tags: ["Python", "Qdrant", "Milvus", "Weaviate", "Vespa", "ChromaDB", "Docker"],
+    link: `${GITHUB}/VectorBench`,
   },
 ]

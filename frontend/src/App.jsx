@@ -50,7 +50,7 @@ export function App() {
         </div>
       </main>
       <footer className="relative z-[1] border-t border-sky-200/70 py-7 text-center text-sm text-slate-500 dark:border-slate-900">
-        © {new Date().getFullYear()} {PROFILE.legalName} — portfolio
+        © {new Date().getFullYear()} {PROFILE.fullName} — portfolio
       </footer>
     </div>
   )
