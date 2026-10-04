@@ -1,6 +1,6 @@
 export const PROFILE = {
-  fullName: "Khoa Nguyen",
-  firstName: "Khoa",
+  fullName: "Cole Nguyen",
+  firstName: "Cole",
   legalName: "Tan Hoang Khoa Nguyen",
   photo: "/profile.png",
   jobTitles: ["Software Engineer", "AI Engineer", "Data Engineer", "Research Assistant"],

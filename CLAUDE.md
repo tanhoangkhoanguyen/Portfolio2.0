@@ -4,96 +4,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Portfolio2.0** is a monorepo containing a personal portfolio website deployed on Vercel (frontend) and Render (backend). The frontend is a React + Vite single-page application with smooth scrolling and animations. The backend is an Express API that handles contact form submissions and sends email notifications.
+Personal portfolio monorepo: `frontend/` is a React 19 + Vite 6 single-page site (Tailwind CSS v4), deployed on Vercel. `backend/` is an Express 5 API (CommonJS) whose only real job is the contact form, deployed on Render via `render.yaml`. See DEPLOY.md for deployment steps.
+
+## Commands
+
+Run each package from its own directory; there is no root workspace script.
+
+```bash
+# Frontend (http://localhost:5173)
+cd frontend && npm install
+npm run dev        # Vite dev server; proxies /api -> http://localhost:8001
+npm run build      # production build to dist/
+npm run lint       # ESLint (flat config, react-hooks + react-refresh)
+npm run preview
+
+# Backend (http://localhost:8001)
+cd backend && npm install
+npm run dev        # nodemon server.js
+npm start          # node server.js (what Render runs)
+```
+
+There are no tests in either package (`backend`'s `npm test` is the npm placeholder). Copy `backend/.env.example` to `backend/.env` for local config.
 
 ## Architecture
 
-### High-level Structure
-```
-Portfolio2.0/
-├── frontend/              # React + Vite SPA
-│   ├── src/
-│   │   ├── components/    # Reusable UI components (Navbar, Hero, Reveal animations, Backgrounds)
-│   │   ├── pages/         # Full-page sections (About, Skills, Projects, Experience, Contact)
-│   │   ├── context/       # React Context (ThemeContext for dark mode)
-│   │   ├── constants/     # Layout and configuration constants
-│   │   └── App.jsx        # Main app with section routing via URL ids
-│   └── vite.config.js     # Dev proxy to backend API
-├── backend/               # Express API
-│   ├── server.js          # Main server (health check, contact endpoint)
-│   └── mail.js            # Email notification service
-├── render.yaml            # Render deployment config
-└── DEPLOY.md              # Deployment instructions for Vercel + Render
-```
-
-### Frontend Flow
-1. **App.jsx** maps section IDs to page components and manages the layout
-2. **Navbar** provides smooth scrolling navigation between sections
-3. Each page component (About, Skills, Projects, Experience, Contact) is wrapped in the **Reveal** component for scroll animations
-4. **Backgrounds** (SkyBackdrop, GalaxyBackground) render in the background via z-index stacking
-5. **ThemeContext** provides dark/light mode toggle
-
-### Backend Flow
-1. **server.js** initializes Express, configures CORS, and sets up routes
-2. On contact form submission:
-   - Validates required fields (name, email, message) with whitespace trimming
-   - Sends email notification (if Resend or SMTP configured)
-   - Returns status (ok, emailSent, emailError)
-3. **mail.js** handles two email providers:
-   - **Resend** (production on Render; free tier 100 emails/day)
-   - **SMTP** (local development only; blocked on Render free tier)
-
-### Deployment
-- Frontend: Vercel (reads `VITE_API_URL` env var to point to backend)
-- Backend: Render (reads `CORS_ORIGIN`, `RESEND_API_KEY`, and SMTP credentials from env vars)
-- Both use git for auto-deploy on push
-- See DEPLOY.md for detailed instructions
-
-## Key Development Notes
-
 ### Frontend
-- **Styling:** Tailwind CSS v4 with @tailwindcss/vite plugin
-- **Page sections:** Add new pages to `src/pages/`, then register them in `CONTENT_SECTIONS` in App.jsx
-- **Components:** Common components are in `src/components/` (Navbar, Reveal, Backgrounds)
-- **Dark mode:** Managed by ThemeContext (watch for `dark:` Tailwind utilities)
-- **Smooth scrolling:** Navbar uses hash-based navigation; sections have `id` attributes and `SECTION_SCROLL_MARGIN` for offset
+- **Single page, no router.** [App.jsx](frontend/src/App.jsx) renders a hero plus the `CONTENT_SECTIONS` array, each as `<section id="…">` wrapped in `<Reveal>` (scroll-in animation).
+- **Adding a section:** add `{ id, label, Page }` to `CONTENT_SECTIONS` in `App.jsx`. The nav links are derived from it; Navbar scrolls with `scrollToSection(id)` and highlights the active link with an `IntersectionObserver` over those ids.
+- **Content vs. presentation:** all copy (profile, contact links, projects, experience roles, skills) lives in [src/data/](frontend/src/data/). Edit data there; pages only render it. Experience roles use `start`/`end` as `"MM/YYYY"` or `"Present"` (drives timeline spacing) and an optional display `label`.
+- **Shared UI** in [components/ui/](frontend/src/components/ui/): `Icon` (named SVG icons — add new ones to its maps), `Button` (`<a>` when `href` given), `GlassCard`, `SectionHeading` (every page's `<h2>`), `ImageWithFallback` + `InitialsBadge`. Reuse these instead of inlining SVGs or button styles.
+- **Layout constants** (`CONTENT_MAX`, `SECTION_SCROLL_MARGIN` for the fixed-header offset) live in [constants/layout.js](frontend/src/constants/layout.js). `<h3>` styles are applied by arbitrary-variant selectors on the wrapper in `App.jsx`.
+- **Dark mode is class-based.** `index.css` declares `@custom-variant dark (&:where(.dark, .dark *))`. `ThemeProvider` toggles `.dark` on `<html>`, defaults to dark, and saves the choice to localStorage under `portfolio-theme`. Read it via `useTheme` from `context/theme.js`, which is kept separate from `ThemeContext.jsx` so that file only exports components (react-refresh lint rule).
+- **API calls** go through `apiUrl(path)` in [lib/api.js](frontend/src/lib/api.js), which prefixes `VITE_API_URL`. If that is unset, the path stays relative and the Vite dev proxy forwards it to the backend.
+- Static images (project and company logos) are in `frontend/public/` and referenced by absolute path (`/ERA.png`).
 
 ### Backend
-- **Message storage:** Contact form messages are validated but not persisted (no database)
-- **CORS:** Set `CORS_ORIGIN` to comma-separated list of allowed origins (default: localhost:5173)
-- **Email:** Optional; supports Resend (production) or SMTP (local dev)
-  - **Resend:** Requires `RESEND_API_KEY` and `CONTACT_TO_EMAIL`
-  - **SMTP:** Requires `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, and `CONTACT_TO_EMAIL`
-- **Health check:** `GET /api/health` returns `{ ok, email }` status
+- [server.js](backend/server.js): `GET /api/health` returns `{ ok, email }`. `POST /api/contact` trims `name`/`email`/`message`, returns 400 if any is empty, and otherwise always returns **201** `{ ok, emailSent, emailError }`. An email failure is reported in `emailError` (`smtp_not_configured` or `send_failed`), not as an HTTP error. Nothing is persisted.
+- [mail.js](backend/mail.js): uses **Resend** when `RESEND_API_KEY` is set (required on Render, whose free tier blocks SMTP ports). Otherwise it falls back to SMTP via Nodemailer for local dev. Both send to `CONTACT_TO_EMAIL` with `replyTo` set to the sender, and user input is HTML-escaped. `dns.setDefaultResultOrder("ipv4first")` is intentional.
+- CORS: `CORS_ORIGIN` is a comma-separated allowlist (exact match). It defaults to `localhost:5173` and `127.0.0.1:5173` when unset.
 
-### Environment Variables
-**Frontend (.env or Vercel settings):**
-- `VITE_API_URL` – Backend API base URL (e.g., `https://portfolio2-backend.onrender.com`)
+### Environment variables
+- Frontend: `VITE_API_URL` (backend base URL, set on Vercel; leave empty locally to use the proxy).
+- Backend: `PORT` (default 8001), `CORS_ORIGIN`, `CONTACT_TO_EMAIL`, `RESEND_API_KEY`, `RESEND_FROM` (defaults to `onboarding@resend.dev`), `SMTP_HOST`/`SMTP_PORT`/`SMTP_SECURE`/`SMTP_USER`/`SMTP_PASS`/`SMTP_FROM`.
 
-**Backend (.env or Render settings):**
-- `PORT` – Server port (default: 8001)
-- `CORS_ORIGIN` – Comma-separated list of allowed origins (required)
-- `RESEND_API_KEY` – Resend API key (optional; use for production email on Render)
-- `RESEND_FROM` – Resend sender address (optional; has fallback default)
-- `CONTACT_TO_EMAIL` – Where to send contact notifications (optional; email won't send if not set)
-- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_FROM` – SMTP settings (optional; for local dev only)
-
-## Testing the Contact Form
-
-1. **Locally (dev mode):**
-   - Terminal 1: `cd backend && npm run dev`
-   - Terminal 2: `cd frontend && npm run dev`
-   - Navigate to `http://localhost:5173/#contact` and submit the form
-   - If SMTP not configured, check backend logs for warnings
-
-2. **Deployed:**
-   - Visit the Vercel frontend URL
-   - Ensure backend `CORS_ORIGIN` includes the frontend URL
-   - Ensure `VITE_API_URL` on Vercel points to the backend URL
-
-## Troubleshooting
-
-- **"CORS blocked" on contact submit:** Check `CORS_ORIGIN` on backend matches frontend origin (case-sensitive)
-- **Contact form hangs or times out:** Check backend health at `GET <BACKEND_URL>/api/health`; if sleeping, trigger a redeploy to wake it
-- **Email not sending:** Verify `CONTACT_TO_EMAIL` is set; if using SMTP on Render, switch to Resend (Render blocks SMTP ports)
-- **Validation errors on contact form:** Message inputs are trimmed; empty strings after trim are rejected
+## Gotchas
+- The Render free tier sleeps when idle, so the first contact submit after a while can be slow. Check `/api/health`.
+- If a deployed contact submit fails with a CORS error, the frontend's origin is missing from `CORS_ORIGIN` on Render.
