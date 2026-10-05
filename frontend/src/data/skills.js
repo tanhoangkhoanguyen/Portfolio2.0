@@ -1,4 +1,4 @@
-/** Pinned devicon release — @latest paths sometimes 404 after renames */
+/** Pinned devicon release - @latest paths sometimes 404 after renames */
 const D = "https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons"
 
 const devicon = (slug) => `${D}/${slug}/${slug}-original.svg`
