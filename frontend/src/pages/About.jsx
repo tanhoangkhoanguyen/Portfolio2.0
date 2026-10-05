@@ -1,56 +1,70 @@
+import { Fragment } from "react"
 import { Button } from "../components/ui/Button"
-import { ImageWithFallback } from "../components/ui/ImageWithFallback"
-import { SectionHeading } from "../components/ui/SectionHeading"
+import { ImageWithFallback, InitialsBadge } from "../components/ui/ImageWithFallback"
+import { ROLES } from "../lib/roles"
 import { PROFILE } from "../data/profile"
-import { scrollToSection } from "../lib/scrollToSection"
+import { useOS } from "../os/context"
 
-const PHOTO_FALLBACK =
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=600&fit=crop&q=80"
+const CURRENT_ROLE = ROLES.find((role) => /present/i.test(role.end))
 
-const PHOTO_CLASS =
-  "aspect-square w-56 rounded-lg object-cover sm:w-60 md:aspect-auto md:h-full md:min-h-[12rem] md:w-full"
+/** "About This Mac"-style spec sheet. */
+const SPECS = [
+  ...PROFILE.facts,
+  CURRENT_ROLE?.location && { label: "Based in", value: CURRENT_ROLE.location },
+].filter(Boolean)
+
+const INITIALS = PROFILE.fullName
+  .split(" ")
+  .map((word) => word[0])
+  .join("")
 
 export function About() {
-  const photoProps = { alt: PROFILE.fullName, width: 280, height: 280, className: PHOTO_CLASS }
+  const { openApp } = useOS()
+  const photoClass = "relative h-36 w-36 rounded-full object-cover shadow-xl ring-1 ring-black/10 dark:ring-white/15"
 
   return (
-    <div className="w-full">
-      <SectionHeading>About me</SectionHeading>
-      <div className="mx-auto mt-10 flex w-full max-w-3xl flex-col gap-8 md:flex-row md:items-stretch md:gap-10">
-        <div className="shrink-0 md:flex md:w-60 md:self-stretch">
+    <div className="os-scroll h-full overflow-y-auto">
+      <div className="mx-auto flex min-h-full max-w-2xl flex-col items-center px-8 pb-5 pt-10 text-center">
+        <div className="relative">
+          <div className="absolute -inset-4 rounded-full bg-gradient-to-br from-indigo-500/45 via-violet-500/30 to-sky-400/35 blur-2xl" aria-hidden />
           <ImageWithFallback
             src={PROFILE.photo}
-            {...photoProps}
-            fallback={<img src={PHOTO_FALLBACK} {...photoProps} />}
+            alt={PROFILE.fullName}
+            width={144}
+            height={144}
+            className={photoClass}
+            fallback={<InitialsBadge text={INITIALS} className={`${photoClass} bg-gradient-to-br from-indigo-500 to-violet-600 text-3xl text-white`} />}
           />
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col items-start">
-          <p className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
-            Hi, I&apos;m <span className="hero-name-gradient">{PROFILE.firstName}</span>
-          </p>
-          <p className="mt-2 w-full text-slate-700 dark:text-slate-300">{PROFILE.bio}</p>
+        <h1 className="mt-6 text-[32px] font-semibold tracking-tight">{PROFILE.fullName}</h1>
+        <p className="mt-1 text-[14px] text-slate-500 dark:text-slate-400">{PROFILE.jobTitles.slice(0, 3).join(" · ")}</p>
 
-          <hr className="my-3 w-full border-0 border-t border-sky-200/90 dark:border-slate-800" />
+        <dl className="mt-6 grid w-full max-w-md grid-cols-[minmax(0,7rem)_1fr] gap-x-3.5 gap-y-2 text-[14.5px]">
+          {SPECS.map(({ label, value }) => (
+            <Fragment key={label}>
+              <dt className="text-right font-semibold text-slate-800 dark:text-slate-200">{label}</dt>
+              <dd className="text-left text-slate-600 dark:text-slate-400">{value}</dd>
+            </Fragment>
+          ))}
+        </dl>
 
-          <dl className="grid w-full gap-1.5">
-            {PROFILE.facts.map(({ label, value }) => (
-              <div key={label} className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
-                <dt className="shrink-0 font-semibold text-sky-800 dark:text-sky-300">{label}</dt>
-                <dd className="text-slate-700 dark:text-slate-300">{value}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button href={PROFILE.resumeUrl} download="Cole-Nguyen-Resume.pdf">
-              Download resume
-            </Button>
-            <Button variant="secondary" onClick={() => scrollToSection("contact")}>
-              Contact me
-            </Button>
-          </div>
+        <div className="mt-7 flex flex-wrap justify-center gap-2.5">
+          <Button href={PROFILE.resumeUrl} target="_blank" rel="noopener noreferrer">
+            View résumé
+          </Button>
+          <Button variant="secondary" onClick={(e) => openApp("contact", e.currentTarget)}>
+            Get in touch
+          </Button>
         </div>
+
+        <p className="mt-7 whitespace-pre-line border-t border-black/[0.07] pt-6 text-[15px] leading-relaxed text-slate-600 dark:border-white/[0.08] dark:text-slate-300/90">
+          {PROFILE.bio}
+        </p>
+
+        <p className="mt-auto pt-6 text-[11.5px] text-slate-400 dark:text-slate-500">
+          ™ and © {new Date().getFullYear()} {PROFILE.fullName}. All rights reserved.
+        </p>
       </div>
     </div>
   )
