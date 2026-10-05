@@ -52,10 +52,10 @@ async function sendContactNotification({ name, email, message }) {
 
   await send({
     to: TO,
-    replyTo: email,
+    ...(email && { replyTo: email }),
     subject: `[Portfolio] Message from ${name}`,
-    text: `From: ${name} <${email}>\n\n${message}`,
-    html: `<p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p><p>${escapeHtml(message).replace(/\n/g, "<br/>")}</p>`,
+    text: `From: ${name}${email ? ` <${email}>` : " (no reply address)"}\n\n${message}`,
+    html: `<p><strong>From:</strong> ${escapeHtml(name)}${email ? ` &lt;${escapeHtml(email)}&gt;` : " (no reply address)"}</p><p>${escapeHtml(message).replace(/\n/g, "<br/>")}</p>`,
   })
   return { sent: true }
 }
