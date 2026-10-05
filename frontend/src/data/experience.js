@@ -1,10 +1,14 @@
 /**
  * `start` / `end` are "MM/YYYY" (or "Present") and drive both the displayed period and timeline spacing.
+ * `type` ("intern" | "lab" | "club") breaks ties when roles end at the same time (intern first).
+ * Optional `achievements` ({ title, result, date, image }) show as cards under the bullets; `image` opens in a preview.
+ * Order here doesn't matter: lib/roles.js sorts by most recent end date.
  */
 export const ROLES = [
   {
     company: "TruState",
     title: "Software Engineer Intern",
+    type: "intern",
     start: "05/2026",
     end: "Present",
     location: "Tampa, FL",
@@ -18,6 +22,7 @@ export const ROLES = [
   {
     company: "CSAIL Lab",
     title: "Research Assistant",
+    type: "lab",
     start: "03/2026",
     end: "Present",
     location: "Tampa, FL",
@@ -25,8 +30,27 @@ export const ROLES = [
     bullets: [],
   },
   {
+    company: "Society of Competitive Programmers (SCP)",
+    title: "Tech Lead",
+    type: "club",
+    start: "12/2025",
+    end: "Present",
+    location: "Tampa, FL",
+    logo: "/scp.jpg",
+    bullets: [],
+    achievements: [
+      {
+        title: "ICPC Southeast USA Regional",
+        result: "35th place",
+        date: "Nov 2024",
+        image: "/icpc-2024-southeast-regional.png",
+      },
+    ],
+  },
+  {
     company: "Rare Lab",
     title: "Research Assistant",
+    type: "lab",
     start: "01/2025",
     end: "05/2025",
     location: "Tampa, FL",
@@ -40,6 +64,7 @@ export const ROLES = [
   {
     company: "FPT Software",
     title: "Software Engineer Intern",
+    type: "intern",
     start: "05/2025",
     end: "08/2025",
     location: "Danang, VN",

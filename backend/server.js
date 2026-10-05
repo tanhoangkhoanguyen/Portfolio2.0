@@ -16,7 +16,7 @@ app.use(express.json())
 
 if (!isEmailConfigured()) {
   console.warn(
-    "Email not configured — set CONTACT_TO_EMAIL plus RESEND_API_KEY (Render) or SMTP_* (local) to send contact notifications."
+    "Email not configured - set CONTACT_TO_EMAIL plus RESEND_API_KEY (Render) or SMTP_* (local) to send contact notifications."
   )
 }
 
@@ -31,8 +31,9 @@ app.post("/api/contact", async (req, res) => {
   const body = req.body || {}
   const contact = { name: clean(body.name), email: clean(body.email), message: clean(body.message) }
 
-  if (!contact.name || !contact.email || !contact.message) {
-    return res.status(400).json({ ok: false, error: "Name, email, and message are required." })
+  // Email is optional: without it the message still arrives, there's just no reply-to address
+  if (!contact.name || !contact.message) {
+    return res.status(400).json({ ok: false, error: "Name and message are required." })
   }
 
   // The message is accepted either way; email problems are reported, not treated as request failures

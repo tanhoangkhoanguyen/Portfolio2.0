@@ -2,9 +2,12 @@ import { useEffect, useState } from "react"
 
 const QUERY = "(prefers-reduced-motion: reduce)"
 
+/** Non-reactive read, for imperative animation code. */
+export const prefersReducedMotion = () => window.matchMedia(QUERY).matches
+
 export function usePrefersReducedMotion() {
   // Read the real value on first render so animations don't start and then immediately stop
-  const [reduced, setReduced] = useState(() => window.matchMedia(QUERY).matches)
+  const [reduced, setReduced] = useState(prefersReducedMotion)
 
   useEffect(() => {
     const mq = window.matchMedia(QUERY)
