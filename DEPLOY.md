@@ -43,7 +43,7 @@ Render will build and deploy. The process takes ~2 minutes. You'll get a URL lik
 ```
 https://portfolio-backend-xxxx.onrender.com
 ```
-**Keep this URL handy** — you'll need it in Step 2.
+**Keep this URL handy** - you'll need it in Step 2.
 
 ### 1.3 Set Environment Variables on Render
 
@@ -54,7 +54,7 @@ Once deployed, go to your service **Settings** → **Environment**. Add:
   - Example: `https://yourname-portfolio.vercel.app`
   - If you have preview URLs too, add them comma-separated: `https://main--yourname-portfolio.vercel.app,https://yourname-portfolio.vercel.app`
 
-**Optional — for email notifications:**
+**Optional - for email notifications:**
 
 **Option A: Use Resend (recommended for Render, since SMTP ports are blocked)**
 - Sign up at [resend.com](https://resend.com/) (free tier: 100 emails/day)
@@ -170,7 +170,7 @@ Should return:
 
 **Check:**
 1. Is the backend URL correct in `VITE_API_URL`?
-2. Is Render service still running? (Check dashboard — it may have auto-slept after 15 min inactivity)
+2. Is Render service still running? (Check dashboard - it may have auto-slept after 15 min inactivity)
 3. If asleep, just click **Redeploy** to wake it up
 
 ### Email not sending on Render
